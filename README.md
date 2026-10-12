@@ -298,5 +298,30 @@ An earlier identical run gave 55.9 / 11.0 / 22.5 / 29.9 images/s. The queue numb
   - The page only remembers the current batch: reloading it loses the gallery (though the results stay in Redis for `RESULT_TTL_SECONDS`).
   - Progress comes from polling every 0.8 s, not push updates.
   - The batch export only includes images that finished; failed ones are left out.
-  - The page was checked by hand-written Playwright runs in Microsoft Edge (Chromium) at laptop size, The CSS has a narrow-screen layout, but it was never tested. There are no automated browser tests in CI; the pytest suite only checks that the page and its assets are served.
+  - The page was checked by hand-written Playwright runs in Microsoft Edge (Chromium) at laptop size. The CSS has a narrow-screen layout, but it was never tested. There are no automated browser tests in CI; the pytest suite only checks that the page and its assets are served.
 - **Segmentation caveats.** The model input is a fixed 520×520 (images are stretched, not letterboxed). Touching objects of the same class merge into one box, polygons trace only the outer edge (holes aren't represented), and only the 20 VOC classes are detected. The benchmark above only covers MobileNetV2; you can benchmark segmentation with `MODEL_NAME=deeplabv3_mobilenet python scripts/run_benchmarks.py`, but expect roughly 20–30× lower throughput.
+
+### Model limitations
+
+The segmentation model is torchvision's pretrained DeepLabV3-MobileNetV3. It only predicts a fixed set of **21 categories**: the 20 PASCAL VOC classes plus background.
+
+> aeroplane, bicycle, bird, boat, bottle, bus, car, cat, chair, cow, diningtable, dog, horse, motorbike, person, pottedplant, sheep, sofa, train, tvmonitor
+
+Anything outside this list is either missed or given the name of the closest category it knows. A bounding box around an object therefore doesn't mean the label is right.
+
+Things seen while trying the web UI by hand. These are observations on a few images, not a measured evaluation:
+
+- **A photo of a hand was labelled "person".** The mask followed the hand, but "person" is just the closest known category.
+- **Close-up photos of potato leaves gave no useful detections.** The only output was a low-confidence (0.40) "cat" guess, which the default slider threshold of 0.6 hides.
+- **Screenshots can produce spurious "tvmonitor" detections.**
+
+The `min_score=0.6` default used for the preview image (and as the slider's starting value) was chosen by looking at one image, as described above. It hasn't been tuned on any dataset.
+
+The model is a pluggable class with a `predict()` method (see [Adding a new model](#adding-a-new-model)). A different model can be added without changing the queue, the API or the frontend, as long as it returns the same COCO-style JSON (`bbox`, `segmentation`, `category_name`, `score`) that the frontend draws from.
+
+## Roadmap (planned, not implemented)
+
+None of the following exists in this repository yet:
+
+- **Open-vocabulary segmentation with text prompts**, for example with SAM 3, so you could ask for "potato leaf" or "hand" instead of being limited to the 21 VOC categories.
+- **Optional VLM-assisted labelling**: a vision-language model suggesting or checking the label for each segmented region.
