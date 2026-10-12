@@ -82,7 +82,7 @@ class RedisMetricsCollector(Collector):
         for name, help_text in [
             (JOBS_COMPLETED, "Jobs that finished successfully."),
             (JOBS_FAILED, "Jobs that raised an error."),
-            (JOBS_REJECTED, "Requests rejected with HTTP 429 because the queue was full."),
+            (JOBS_REJECTED, "Jobs (images) rejected with HTTP 429 because the queue was full."),
         ]:
             # CounterMetricFamily adds the "_total" suffix itself.
             counter = CounterMetricFamily("inference_" + name.removesuffix("_total"), help_text)

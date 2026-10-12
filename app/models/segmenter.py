@@ -125,9 +125,11 @@ class DeepLabV3Segmenter(InferenceModel):
         self.class_names = json.loads((model_dir / "voc_classes.json").read_text())
         # Blobs smaller than this fraction of the image are treated as noise.
         self.min_area_fraction = min_area_fraction
-        # Objects whose mean confidence is below this are dropped. Low-confidence
-        # blobs are usually the model being unsure (e.g. patches of a white dog's
-        # fur labelled "cat" at ~0.55). 0.6 was picked by eye, not tuned on data.
+        # Objects whose mean confidence is below this are left out of the preview
+        # image (but still saved in the JSON, so clients can choose their own
+        # threshold). Low-confidence blobs are usually the model being unsure,
+        # e.g. patches of a white dog's fur labelled "cat" at ~0.55.
+        # 0.6 was picked by eye, not tuned on data.
         self.min_score = min_score
 
     def predict(self, image: Image.Image) -> Prediction:
@@ -144,11 +146,12 @@ class DeepLabV3Segmenter(InferenceModel):
         confidence = cv2.resize(confidence, (width, height), interpolation=cv2.INTER_LINEAR)
 
         min_area = max(1, int(self.min_area_fraction * width * height))
-        objects = [
-            obj for obj in find_objects(labels, confidence, min_area) if obj[3] >= self.min_score
-        ]
+        objects = find_objects(labels, confidence, min_area)
+
+        # The JSON gets every object; the preview only the confident ones.
         coco = self.to_coco(objects, width, height)
-        preview = draw_preview(np.asarray(image), objects, self.class_names)
+        confident = [obj for obj in objects if obj[3] >= self.min_score]
+        preview = draw_preview(np.asarray(image), confident, self.class_names)
         return Prediction(result=coco, preview=preview)
 
     def to_coco(self, objects, width: int, height: int) -> dict:
@@ -173,6 +176,8 @@ class DeepLabV3Segmenter(InferenceModel):
         ]
         return {
             "model": self.name,
+            # Extra (non-standard) info: the threshold used for the preview image.
+            "info": {"model": self.name, "preview_min_score": self.min_score},
             "images": [
                 {"id": 1, "file_name": INPUT_IMAGE_FILENAME, "width": width, "height": height}
             ],

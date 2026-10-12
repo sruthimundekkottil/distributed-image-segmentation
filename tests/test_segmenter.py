@@ -83,9 +83,14 @@ def test_predict_returns_coco_and_preview_in_original_coordinates():
 
     assert coco["images"] == [{"id": 1, "file_name": "input.jpg", "width": 1040, "height": 520}]
     assert len(coco["categories"]) == 20
+    assert coco["info"]["preview_min_score"] == 0.6
     annotations = coco["annotations"]
-    # Two dogs and a cat; the low-confidence "person" blob was dropped.
-    assert sorted(a["category_name"] for a in annotations) == ["class12", "class12", "class8"]
+    # Two dogs, a cat, and the low-confidence "person": the JSON keeps everything
+    # so clients can pick their own threshold.
+    names = sorted(a["category_name"] for a in annotations)
+    assert names == ["class12", "class12", "class15", "class8"]
+    person = next(a for a in annotations if a["category_name"] == "class15")
+    assert 0.55 < person["score"] < 0.6
 
     first_dog = next(a for a in annotations if a["bbox"][1] == 50)
     assert first_dog["bbox"] == [100, 50, 400, 100]  # x and width doubled
@@ -96,8 +101,12 @@ def test_predict_returns_coco_and_preview_in_original_coordinates():
 
     assert prediction.preview.shape == (520, 1040, 3)
     assert prediction.preview.dtype == np.uint8
-    # Something was drawn: the preview differs from the plain input.
-    assert not np.array_equal(prediction.preview, np.asarray(image))
+    background = (30, 30, 30)
+    # The confident dog was drawn (pixel inside its mask changed) ...
+    assert tuple(prediction.preview[100, 300]) != background
+    # ... but the "person" below min_score was not (pixel inside it is untouched).
+    # Person blob: rows 10-60, columns 400-500 at 520px -> 800-1000 at 1040px.
+    assert tuple(prediction.preview[35, 900]) == background
     json.dumps(coco)  # must be JSON-serialisable
 
 
