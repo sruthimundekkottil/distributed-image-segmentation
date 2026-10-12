@@ -22,6 +22,11 @@ services:
 
   api:
     build: .
+    # API_WORKERS = number of uvicorn processes. One Python process can only
+    # use about one CPU core (the GIL), so under heavy load the API itself can
+    # become the bottleneck. Metrics live in Redis, so several processes are fine.
+    command: ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8000",
+              "--workers", "${API_WORKERS:-1}"]
     ports:
       - "8000:8000"
     environment: *common-env

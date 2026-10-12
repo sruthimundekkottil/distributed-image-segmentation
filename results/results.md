@@ -1,0 +1,17 @@
+# Benchmark results
+
+- Date: 2026-10-12 20:35
+- **CPU cores: 4 physical / 8 logical on the host, 8 available to Docker**
+- CPU: AMD Ryzen 5 7235HS (Windows 11)
+- Model: `mobilenet_v2` on ONNX Runtime (CPU), `ORT_NUM_THREADS=1` per process, `API_WORKERS=1` uvicorn process(es)
+- Load: 16 concurrent Locust users, no think time, 60 s per scenario, same JPEG (loadtest/sample.jpg) every time
+- Locust, the API, Redis and the workers all ran on the same machine.
+
+| Scenario | Workers | Images completed | Throughput (images/s) | p50 latency (ms) | p95 latency (ms) | Failed | Rejected (429) |
+|---|---|---|---|---|---|---|---|
+| Sync baseline (/predict_sync) | - (in API process) | 4540 | 77.8 | 200 | 270 | 0 | 0 |
+| Queue + 1 worker | 1 | 707 | 11.9 | 1300 | 1500 | 0 | 0 |
+| Queue + 2 workers | 2 | 1207 | 20.7 | 770 | 890 | 0 | 0 |
+| Queue + 4 workers | 4 | 1765 | 29.7 | 510 | 780 | 0 | 0 |
+
+Latency for the queue scenarios is the full client-side round trip: upload, wait in the queue, inference, and polling `GET /jobs/{id}` every 20 ms until the result is ready.
