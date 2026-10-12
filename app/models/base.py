@@ -16,6 +16,11 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image
 
+# When a model produces a preview, the worker also saves a copy of the input
+# image under this name, next to the result JSON. COCO-style JSON refers to it
+# in "file_name", so tools like CVAT or FiftyOne can open the pair together.
+INPUT_IMAGE_FILENAME = "input.jpg"
+
 
 @dataclass
 class Prediction:

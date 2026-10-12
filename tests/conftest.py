@@ -23,13 +23,16 @@ from app.models import InferenceModel, Prediction, set_model
 class FakeModel(InferenceModel):
     name = "fake"
 
-    def __init__(self, fail: bool = False):
+    def __init__(self, fail: bool = False, make_preview: bool = True):
         self.fail = fail
+        self.make_preview = make_preview
 
     def predict(self, image: Image.Image) -> Prediction:
         if self.fail:
             raise ValueError("model exploded")
-        preview = np.zeros((image.height, image.width, 3), dtype=np.uint8)
+        preview = None
+        if self.make_preview:
+            preview = np.zeros((image.height, image.width, 3), dtype=np.uint8)
         return Prediction(
             result={"model": self.name, "predictions": [{"label": "cat", "score": 0.9}]},
             preview=preview,

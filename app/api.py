@@ -19,7 +19,7 @@ import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Response, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from PIL import Image, UnidentifiedImageError
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest
 from redis import Redis
@@ -126,6 +126,19 @@ def create_app(redis: Redis | None = None) -> FastAPI:
             body["error"] = result.exc_string.strip().splitlines()[-1] if result else "failed"
         return body
 
+    @app.get("/jobs/{job_id}/preview")
+    def get_job_preview(job_id: str):
+        """The image with boxes drawn on it (only for models that make a preview)."""
+        try:
+            job = Job.fetch(job_id, connection=redis)
+        except NoSuchJobError as exc:
+            raise HTTPException(404, "Job not found (unknown ID or result expired)") from exc
+        # Build the path from the ID RQ gave us, never from raw user input.
+        path = config.OUTPUT_DIR / job.id / "preview.png"
+        if not path.exists():
+            raise HTTPException(404, "No preview for this job (not finished, or model has none)")
+        return FileResponse(path, media_type="image/png")
+
     # A plain "def" endpoint: FastAPI runs it in a thread pool, so the slow,
     # CPU-bound model call does not block the async event loop.
     @app.post("/predict_sync")
@@ -133,7 +146,7 @@ def create_app(redis: Redis | None = None) -> FastAPI:
         start = time.perf_counter()
         data = file.file.read()
         validate_image(data)
-        prediction, inference_seconds = predict_image(data)
+        _image, prediction, inference_seconds = predict_image(data)
         metrics.observe(redis, metrics.SYNC_LATENCY, time.perf_counter() - start)
         return {**prediction.result, "inference_ms": round(inference_seconds * 1000, 2)}
 

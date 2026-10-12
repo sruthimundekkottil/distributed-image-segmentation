@@ -1,6 +1,7 @@
 # Start everything:          docker compose up --build
 # Start with 4 workers:      docker compose up --build --scale worker=4
-# Pick the model:            MODEL_NAME=mobilenet_v2 docker compose up
+# Pick the model:            MODEL_NAME=deeplabv3_mobilenet docker compose up
+#   (mobilenet_v2 = classification, deeplabv3_mobilenet = segmentation + boxes)
 
 # Settings shared by the api and worker containers.
 x-common-env: &common-env

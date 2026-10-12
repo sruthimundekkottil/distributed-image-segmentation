@@ -11,6 +11,8 @@ COPY requirements-export.txt .
 RUN pip install --no-cache-dir -r requirements-export.txt
 COPY scripts/export_mobilenet.py scripts/
 RUN python scripts/export_mobilenet.py --out-dir /build/models
+COPY scripts/export_deeplab.py scripts/
+RUN python scripts/export_deeplab.py --out-dir /build/models
 
 # ---------------------------------------------------------------------------
 # Stage 2: runtime image shared by the api and worker services.

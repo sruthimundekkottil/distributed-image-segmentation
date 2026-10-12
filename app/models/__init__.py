@@ -3,10 +3,12 @@
 from app import config
 from app.models.base import InferenceModel, Prediction
 from app.models.classifier import MobileNetV2Classifier
+from app.models.segmenter import DeepLabV3Segmenter
 
 # Add new models here. The key is the value you put in MODEL_NAME.
 MODEL_REGISTRY: dict[str, type[InferenceModel]] = {
-    "mobilenet_v2": MobileNetV2Classifier,
+    "mobilenet_v2": MobileNetV2Classifier,  # image classification (ImageNet)
+    "deeplabv3_mobilenet": DeepLabV3Segmenter,  # segmentation -> boxes + COCO JSON
 }
 
 # One loaded model per process. Loading is slow, so we only do it once.
