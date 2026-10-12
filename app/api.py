@@ -7,7 +7,7 @@ Two ways to get a prediction:
     GET  /jobs/{id}   -> poll until status is "finished", then read the result
   Separate worker processes do the actual inference.
 
-* Batches (many images at once, used by the web page at "/"):
+* Batches (many images at once, used by the web page served at "/"):
     POST /batches              -> one job per image, returns a batch ID
     GET  /batches/{id}         -> progress: total / completed / failed + per-job status
     GET  /batches/{id}/export  -> one combined COCO JSON for the whole batch
@@ -24,9 +24,11 @@ import logging
 import time
 import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Response, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest
 from redis import Redis
@@ -40,6 +42,9 @@ from app.models import get_model
 from app.tasks import predict_image
 
 log = logging.getLogger("api")
+
+# The web page (plain HTML/CSS/JS, no build step) lives next to this file.
+STATIC_DIR = Path(__file__).parent / "static"
 
 # Keys of a worker's return value that are bookkeeping, not part of the model result.
 JOB_EXTRA_KEYS = ("inference_ms", "output_files")
@@ -81,6 +86,11 @@ def create_app(redis: Redis | None = None) -> FastAPI:
         yield
 
     app = FastAPI(title="Scalable inference service", lifespan=lifespan)
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+    @app.get("/", include_in_schema=False)
+    def index():
+        return FileResponse(STATIC_DIR / "index.html")
 
     def fetch_job(job_id: str) -> Job:
         try:

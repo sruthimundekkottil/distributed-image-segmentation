@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Segmentation Service</title>
+  <!-- Inline icon so the browser doesn't request a missing /favicon.ico -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='2' y='2' width='12' height='12' rx='2' fill='none' stroke='%232463eb' stroke-width='2'/></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Segmentation service</h1>
+      <p class="subtitle">Upload images, they are queued in Redis and segmented by the worker pool.</p>
+    </div>
+
+    <!-- Live numbers read from GET /metrics every few seconds -->
+    <dl class="status-panel" aria-live="polite">
+      <div><dt>Model</dt><dd id="stat-model">–</dd></div>
+      <div><dt>Workers</dt><dd id="stat-workers">–</dd></div>
+      <div><dt>Queue depth</dt><dd id="stat-queue">–</dd></div>
+      <div><dt>Jobs completed</dt><dd id="stat-completed">–</dd></div>
+    </dl>
+  </header>
+
+  <main>
+    <div id="error-box" class="message error" role="alert" hidden></div>
+    <div id="warning-box" class="message warning" hidden></div>
+
+    <section class="card upload-card">
+      <!-- The whole drop zone is a <label> for the hidden file input, so clicking it opens the picker. -->
+      <label id="drop-zone" class="drop-zone" for="file-input">
+        <input id="file-input" type="file" accept="image/*" multiple hidden>
+        <strong>Drop images here</strong>
+        <span>or click to choose files</span>
+      </label>
+
+      <div class="upload-actions">
+        <p id="selection-text" class="muted">No images selected.</p>
+        <div class="buttons">
+          <button id="clear-button" type="button" class="secondary" disabled>Clear</button>
+          <button id="process-button" type="button" disabled>Process</button>
+        </div>
+      </div>
+
+      <div id="progress" class="progress" hidden>
+        <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+        <p id="progress-text" class="muted"></p>
+      </div>
+    </section>
+
+    <section id="results" class="results" hidden>
+      <div class="results-toolbar card">
+        <label class="slider">
+          <span>Min confidence <output id="score-value">0.60</output></span>
+          <input id="score-slider" type="range" min="0" max="1" step="0.01" value="0.6">
+        </label>
+        <button id="download-button" type="button" disabled>Download COCO JSON</button>
+      </div>
+      <div id="gallery" class="gallery"></div>
+    </section>
+  </main>
+
+  <!-- Template for one image in the gallery. app.js clones it per uploaded file. -->
+  <template id="result-template">
+    <article class="card result">
+      <header class="result-header">
+        <h2 class="file-name"></h2>
+        <span class="badge"></span>
+      </header>
+      <div class="panels">
+        <figure>
+          <img class="original" alt="">
+          <figcaption>Original</figcaption>
+        </figure>
+        <figure>
+          <canvas class="output"></canvas>
+          <figcaption class="output-caption">Waiting for result…</figcaption>
+        </figure>
+      </div>
+      <ul class="detections"></ul>
+    </article>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

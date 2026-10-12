@@ -96,3 +96,12 @@ def test_metrics_endpoint(client, png_bytes, run_worker):
     assert "inference_jobs_completed_total 2.0" in text
     assert "inference_job_latency_seconds_count 2.0" in text
     assert 'inference_job_latency_seconds_bucket{le="+Inf"} 2.0' in text
+
+
+def test_frontend_page_and_assets_are_served(client):
+    page = client.get("/")
+    assert page.status_code == 200
+    assert "text/html" in page.headers["content-type"]
+    assert '<script src="/static/app.js">' in page.text
+    for asset in ("/static/app.js", "/static/style.css"):
+        assert client.get(asset).status_code == 200
