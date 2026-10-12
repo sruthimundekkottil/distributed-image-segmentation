@@ -29,9 +29,9 @@ The first build takes a few minutes, because it downloads PyTorch to export the 
 
 The status panel in the top right shows the model, worker count, queue depth and jobs completed, read from `/metrics` every 2 seconds.
 
-![The web app after processing a batch of 16 photos](docs/frontend.jpg)
+![The web app after processing a batch of six cat photos](docs/frontend.jpg)
 
-*Screenshot: a batch of 16 photos processed by two DeepLabV3 workers (the first two results are shown). On the first photo the saddle gets its own "bicycle 0.74" box: its pixels form a separate blob from the frame, a side effect of turning the mask into objects with connected components.*
+*Screenshot: a batch of six phone photos of cats processed by two DeepLabV3 workers (the first two results are shown). The first photo has one detection, "cat 0.93". In the second, the cat (0.92) and the chair behind it (0.74) are found, but the two lower "chair" boxes (0.67 and 0.66) appear to sit on the table, so they look like mislabels. A fifth detection ("chair 0.51") is crossed out because it is below the 0.60 slider value.*
 
 ### How it works
 
