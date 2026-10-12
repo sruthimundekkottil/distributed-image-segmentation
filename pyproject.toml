@@ -1,0 +1,17 @@
+[project]
+name = "scalable-inference-service"
+version = "0.1.0"
+description = "A small queue-based ML inference service built to learn how production inference systems work."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/W: pycodestyle, F: pyflakes, I: import sorting, B: bugbear, UP: pyupgrade
+select = ["E", "W", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

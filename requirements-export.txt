@@ -1,0 +1,8 @@
+# Only needed to export the PyTorch models to ONNX (scripts/export_*.py).
+# Install the CPU-only PyTorch wheels (much smaller than the CUDA ones) with:
+#   pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements-export.txt
+onnx
+onnxscript
+onnxruntime==1.31.0
+numpy

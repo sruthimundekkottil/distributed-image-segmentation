@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+/models/
+/outputs/
+results/locust_*
+.pytest_tmp/
+.claude/
