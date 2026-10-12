@@ -29,9 +29,9 @@ The first build takes a few minutes, because it downloads PyTorch to export the 
 
 The status panel in the top right shows the model, worker count, queue depth and jobs completed, read from `/metrics` every 2 seconds.
 
-![The web app after processing five images](docs/frontend.jpg)
+![The web app after processing a batch of 16 photos](docs/frontend.jpg)
 
-*Screenshot: five images processed by two DeepLabV3 workers. On the first image, two low-confidence "cat" detections (0.56 and 0.54) are crossed out because they are below the 0.60 slider value.*
+*Screenshot: a batch of 16 photos processed by two DeepLabV3 workers (the first two results are shown). On the first photo the saddle gets its own "bicycle 0.74" box: its pixels form a separate blob from the frame, a side effect of turning the mask into objects with connected components.*
 
 ### How it works
 

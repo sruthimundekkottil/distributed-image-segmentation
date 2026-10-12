@@ -8,3 +8,6 @@ __pycache__/
 results/locust_*
 .pytest_tmp/
 .claude/
+
+# Input photos used only to make the README screenshot (not committed)
+docs/screenshot_inputs/
